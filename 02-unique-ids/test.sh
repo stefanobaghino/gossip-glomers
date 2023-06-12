@@ -4,4 +4,4 @@ set -euxo pipefail
 
 go build -o bin/unique-ids 02-unique-ids/main.go
 
-/opt/maelstrom/maelstrom test -w unique-ids --bin bin/unique-ids --time-limit 30 --rate 1000 --node-count 3 --availability total --nemesis partition
+maelstrom test -w unique-ids --bin bin/unique-ids --time-limit 30 --rate 1000 --node-count 3 --availability total --nemesis partition
