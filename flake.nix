@@ -1,15 +1,26 @@
 {
   description = "gossip-glomers";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/23.05";
-  inputs.flake-utils.url = "github:numtide/flake-utils";
+  inputs = {
+    nixpkgs.url = "nixpkgs";
+    flake-utils.url = github:numtide/flake-utils;
+    maelstrom.url = "path:./nix/maelstrom";
+  };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem
-      (system:
-        let pkgs = nixpkgs.legacyPackages.${system}; in
-        {
-          devShells.default = import ./shell.nix { inherit pkgs; };
-        }
-      );
+  outputs = { self, nixpkgs, flake-utils, maelstrom }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in
+      {
+        devShells.default = pkgs.mkShell {
+          packages = [
+            pkgs.nixpkgs-fmt
+            pkgs.go
+            pkgs.gotools
+            maelstrom.packages.${system}.default
+          ];
+        };
+      }
+    );
 }

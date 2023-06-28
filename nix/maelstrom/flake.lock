@@ -18,36 +18,7 @@
         "type": "github"
       }
     },
-    "maelstrom": {
-      "inputs": {
-        "nixpkgs": "nixpkgs"
-      },
-      "locked": {
-        "lastModified": 1,
-        "narHash": "sha256-auq8qZDtDB1rtMyomTr59wEAGXNvci6HGgga3VX/eLU=",
-        "path": "./nix/maelstrom",
-        "type": "path"
-      },
-      "original": {
-        "path": "./nix/maelstrom",
-        "type": "path"
-      }
-    },
     "nixpkgs": {
-      "locked": {
-        "lastModified": 1687886075,
-        "narHash": "sha256-PeayJDDDy+uw1Ats4moZnRdL1OFuZm1Tj+KiHlD67+o=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "a565059a348422af5af9026b5174dc5c0dcefdae",
-        "type": "github"
-      },
-      "original": {
-        "id": "nixpkgs",
-        "type": "indirect"
-      }
-    },
-    "nixpkgs_2": {
       "locked": {
         "lastModified": 1687886075,
         "narHash": "sha256-PeayJDDDy+uw1Ats4moZnRdL1OFuZm1Tj+KiHlD67+o=",
@@ -64,8 +35,7 @@
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
-        "maelstrom": "maelstrom",
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs"
       }
     },
     "systems": {
