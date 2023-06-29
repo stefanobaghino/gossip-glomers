@@ -4,13 +4,13 @@
   inputs = {
     nixpkgs.url = "nixpkgs";
     flake-utils.url = github:numtide/flake-utils;
-    maelstrom.url = "path:./nix/maelstrom";
+    maelstrom.url = "path:nix/maelstrom";
   };
 
   outputs = { self, nixpkgs, flake-utils, maelstrom }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
+        pkgs = import nixpkgs { inherit system; };
       in
       {
         devShells.default = pkgs.mkShell {
