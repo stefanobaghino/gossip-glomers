@@ -114,8 +114,10 @@ func (b *broadcaster) startEventLoop() {
 				messages = append(messages, message)
 			}
 			b.outbox = make(chan float64, b.config.outboxSize)
-			for _, neighbor := range b.neighbors {
-				go b.gossip(messages, neighbor)
+			if len(messages) > 0 {
+				for _, neighbor := range b.neighbors {
+					go b.gossip(neighbor, broadcastMessage{Type: "broadcast", Messages: messages})
+				}
 			}
 		}
 	}
@@ -168,27 +170,30 @@ func (b *broadcaster) processReadMessage() readMessage {
 	return res
 }
 
-func withTimeout(t time.Duration, f func(ctx context.Context) (maelstrom.Message, error)) (maelstrom.Message, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), t)
+func (b *broadcaster) syncRPCWithTimeout(dest string, req any) (maelstrom.Message, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), b.config.gossipTimeout)
 	defer cancel()
-	return f(ctx)
+	return b.node.SyncRPC(ctx, dest, req)
 }
 
-func (b *broadcaster) gossip(messages []float64, neighbor string) {
-	body := broadcastMessage{Type: "broadcast", Messages: messages}
-	for {
-		msg, err := withTimeout(b.config.gossipTimeout, func(ctx context.Context) (maelstrom.Message, error) {
-			return b.node.SyncRPC(ctx, neighbor, body)
-		})
-		if err == nil {
-			if err := json.Unmarshal(msg.Body, &body); err != nil {
-				log.Fatalln(err)
-			}
-			if body.Type != "broadcast_ok" {
-				log.Fatalln("unexpected response type", body.Type)
-			}
-			break
+func (b *broadcaster) gossip(dest string, broadcast broadcastMessage) {
+	msg, err := b.syncRPCWithTimeout(dest, broadcast)
+	for err != nil {
+		switch err {
+		case context.DeadlineExceeded:
+			msg, err = b.syncRPCWithTimeout(dest, broadcast)
+			continue
+		default:
+			log.Println("giving up on unexpected error", err)
+			return
 		}
+	}
+	var body typeMessage
+	if err := json.Unmarshal(msg.Body, &body); err != nil {
+		log.Fatalln(err)
+	}
+	if body.Type != "broadcast_ok" {
+		log.Fatalln("unexpected response type", body.Type)
 	}
 }
 

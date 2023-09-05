@@ -19,6 +19,9 @@
             pkgs.nixpkgs-fmt
             pkgs.go
             pkgs.gotools
+            pkgs.gopls
+            pkgs.godef
+            pkgs.go-outline
             maelstrom
           ];
         };
