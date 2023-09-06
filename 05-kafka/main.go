@@ -112,12 +112,9 @@ func main() {
 					log.Fatalln(err)
 				}
 				msgs := make(map[string][][2]int)
-				for key, offset := range poll.Offsets {
-					msgs[key] = [][2]int{}
-					for i, kv := range journal[offset:] {
-						if kv.k == key {
-							msgs[key] = append(msgs[key], [2]int{i, kv.v})
-						}
+				for offset, kv := range journal {
+					if _, ok := poll.Offsets[kv.k]; ok && offset >= poll.Offsets[kv.k] {
+						msgs[kv.k] = append(msgs[kv.k], [2]int{offset, kv.v})
 					}
 				}
 				errors <- node.Reply(msg, pollResponseMsg(msgs))
