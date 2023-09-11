@@ -81,6 +81,16 @@ func syncRPCWithTimeout(node *maelstrom.Node, dest string, req any) (maelstrom.M
 	return node.SyncRPC(ctx, dest, req)
 }
 
+func retryOnTimeout(f func() (maelstrom.Message, error)) (maelstrom.Message, error) {
+	for {
+		msg, err := f()
+		if err == context.DeadlineExceeded {
+			continue
+		}
+		return msg, err
+	}
+}
+
 func main() {
 	node := maelstrom.NewNode()
 	journal := make([]kv, 0)
@@ -103,6 +113,14 @@ func main() {
 				if err := json.Unmarshal(msg.Body, &send); err != nil {
 					log.Fatalln(err)
 				}
+				primary := node.NodeIDs()[0]
+				if node.ID() != primary {
+					fromPrimary, _ := retryOnTimeout(func() (maelstrom.Message, error) {
+						return syncRPCWithTimeout(node, primary, send)
+					})
+					errors <- node.Reply(msg, fromPrimary.Body)
+					continue
+				}
 				journal = append(journal, kv{k: send.Key, v: send.Msg})
 				errors <- node.Reply(msg, sendResponseMsg(offset))
 				offset += 1
@@ -110,6 +128,14 @@ func main() {
 				var poll pollRequest
 				if err := json.Unmarshal(msg.Body, &poll); err != nil {
 					log.Fatalln(err)
+				}
+				primary := node.NodeIDs()[0]
+				if node.ID() != primary {
+					fromPrimary, _ := retryOnTimeout(func() (maelstrom.Message, error) {
+						return syncRPCWithTimeout(node, primary, poll)
+					})
+					errors <- node.Reply(msg, fromPrimary.Body)
+					continue
 				}
 				msgs := make(map[string][][2]int)
 				for offset, kv := range journal {
@@ -123,6 +149,14 @@ func main() {
 				if err := json.Unmarshal(msg.Body, &commitOffsets); err != nil {
 					log.Fatalln(err)
 				}
+				primary := node.NodeIDs()[0]
+				if node.ID() != primary {
+					fromPrimary, _ := retryOnTimeout(func() (maelstrom.Message, error) {
+						return syncRPCWithTimeout(node, primary, commitOffsets)
+					})
+					errors <- node.Reply(msg, fromPrimary.Body)
+					continue
+				}
 				for key, offset := range commitOffsets.Offsets {
 					if committed[key] < offset {
 						committed[key] = offset
@@ -133,6 +167,14 @@ func main() {
 				var listCommittedOffsets listCommittedOffsetsRequest
 				if err := json.Unmarshal(msg.Body, &listCommittedOffsets); err != nil {
 					log.Fatalln(err)
+				}
+				primary := node.NodeIDs()[0]
+				if node.ID() != primary {
+					fromPrimary, _ := retryOnTimeout(func() (maelstrom.Message, error) {
+						return syncRPCWithTimeout(node, primary, listCommittedOffsets)
+					})
+					errors <- node.Reply(msg, fromPrimary.Body)
+					continue
 				}
 				errors <- node.Reply(msg, listCommittedOffsetsResponseMsg(committed))
 			}
