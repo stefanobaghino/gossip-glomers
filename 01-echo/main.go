@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
-	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
+	maelstrom "github.com/stefanobaghino/maelstrom/demo/go"
 )
 
 func main() {

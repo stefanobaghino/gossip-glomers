@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
+	maelstrom "github.com/stefanobaghino/maelstrom/demo/go"
 )
 
 type typeMessage struct {
